@@ -7,7 +7,8 @@ import itertools
 
 with open('data/mochila.csv', 'r', newline='') as csv_file:
     Mochila = list(csv.reader(csv_file))
-    
+
+
 # Convert ot int
 Mochila = np.array(Mochila, dtype=int)
 # print(Mochila)
@@ -23,13 +24,14 @@ print("* Maximum weight allowed:", W_max)
 print('-'*40)
 print()
 
+# problem solver - exhaustive search
 max_val = 0
 max_w = 0
 best = []
 
 for mask in itertools.product([True, False], repeat=N):
     # print(Mochila[mask,:])
-    selection = np.sum(Mochila[mask,:], axis=0)
+    selection = np.sum(Mochila[mask,], axis=0)
     # print(selection[0])
 
     if selection[0] <= W_max:
