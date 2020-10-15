@@ -9,7 +9,8 @@ class Problem(ABC):
     def __init__(self):
         self.solvers_dict = {
             'exhaustive': self.ExhaustiveSearch,
-            'greedy': self.GreedyAlg
+            'greedy': self.GreedyAlg,
+            'dynamic': self.Dynamic,
         }
         self.P = {} # instance of the problem
         self.data = None
@@ -24,5 +25,9 @@ class Problem(ABC):
 
 
     def GreedyAlg(self):
+        raise Exception('This method is not defined')
+
+
+    def Dynamic(self):
         raise Exception('This method is not defined')
 
