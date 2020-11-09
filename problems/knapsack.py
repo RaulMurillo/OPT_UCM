@@ -6,10 +6,9 @@ import itertools
 class Knapsack(Problem):
     def __init__(self, N, max_W, data):
         super().__init__()
-        # self.solver = solvers_dict[solver.lower()]()
         self.P = {"N": N, 'max_W': max_W}
         self.data = data
-        # data[:,0] are values
+        # data[:,0] are profits
         # data[:,1] are weights
         print()
         print("="*10+" The Knapsack Problem "+"="*10)
@@ -20,70 +19,112 @@ class Knapsack(Problem):
 
     def resolve(self, method):
         print("Solving Knapsack Problem using " + method + " algorithm")
-        (max_val, max_w, best) = super().resolve(method)
-        print("Best solution, with weight %d and value %d, takes elements:" %
-              (max_w, max_val))
-        print(best)
-        if not best is None:
-            print(np.arange(self.P["N"])[np.array(best)])
+        (best_profit, best_w, best_set) = super().resolve(method)
+        print("Best solution, with weight %d and profit %d, takes elements:" %
+              (best_w, best_profit))
+        print(best_set)
+        print(len(best_set))
+        # if not best is None:
+        #     print(np.arange(self.P["N"])[np.array(best)])
+        #     print(len(best))
+        # else:
+        #     print(best)
         print()
 
     def ExhaustiveSearch(self):
-        max_val = 0
-        max_w = 0
-        best = []
+        best_profit = 0
+        best_w = 0
+        best_set = []
 
         for mask in itertools.product([True, False], repeat=self.P['N']):
-            # print(Mochila[mask,:])
             selection = np.sum(self.data[mask, ], axis=0)
-            # print(selection[0])
 
             if selection[1] <= self.P['max_W']:
-                if selection[0] > max_val:
-                    max_val = selection[0]
-                    max_w = selection[1]
-                    best = mask
+                if selection[0] > best_profit:
+                    best_profit = selection[0]
+                    best_w = selection[1]
+                    best_set = mask
 
-        return (max_val, max_w, best)
+        return (best_profit, best_w, best_set)
 
     def GreedyAlg(self):
-        max_val = 0
-        max_w = 0
-        best = []
+        best_profit = 0
+        best_w = 0
+        best_set = []
 
-        # density = value/weight
+        # density = profit/weight
         density = self.data[:, 0]/self.data[:, 1]
         # Use [::-1] to get descending order
         ordered_d = np.argsort(density, kind='quicksort')[::-1]
 
         for obj in ordered_d:
-            if max_w + self.data[obj, 1] <= self.P['max_W']:
-                max_val += self.data[obj, 0]
-                max_w += self.data[obj, 1]
-                best.append(obj)
+            if best_w + self.data[obj, 1] <= self.P['max_W']:
+                best_profit += self.data[obj, 0]
+                best_w += self.data[obj, 1]
+                best_set.append(obj)
 
-        return (max_val, max_w, best)
+        return (best_profit, best_w, best_set)
 
 
-    def Dynamic(self):
-        # Value/profit oriented
-        max_Val = np.sum(self.data[:,0])
-        m = (np.zeros((self.P['N'], max_Val+1), dtype=np.uint16)-1).astype(np.uint16)
-        # first row of weights-matrix `m`, all inf except column with value equal as firts object's value
-        m[0, self.data[0,0]] = self.data[0,1]
-        for i in range(1, self.P['N']):
-            for j in range(max_Val+1):
-                if self.data[i,0] > j:
-                    m[i,j] = m[i-1, j]
+    def Dynamic(self, _profit=None):
+        # Profit oriented - http://didawiki.cli.di.unipi.it/lib/exe/fetch.php/magistraleinformatica/ad/ad_17/vazirani_knapsack.pdf
+        if _profit is None:
+            profit = self.data[:,0]
+        else:
+            # The profits are given as input
+            profit = _profit
+        # Add base/corner case - No object is taken
+        profit = np.append(0, profit)
+        weight = np.append(0, self.data[:,1])
+        
+        P = np.sum(profit) # This is faster and smaller than `P = N*max_profit`, as original Vazirani's text propose
+        # print(P) # Number of columns in the matrix
+
+        # first row of weights-matrix `M`, all infinity except column with profit equal as first object's profit
+        M = (np.zeros((self.P['N']+1, P+1), dtype=np.uint64)-1).astype(np.uint64)
+        M[0, profit[0]] = weight[0]
+        for i in range(1, self.P['N']+1):
+            for j in range(P+1):
+                if profit[i] > j: # profit(obj_i) > j
+                    M[i,j] = M[i-1, j]
                 else:
-                    m[i,j] = min(m[i-1, j], self.data[i,1]+m[i-1, j-self.data[i,0]])
-        # Get maximum profit
-        valid = (np.argwhere(m[-1, :] <= self.P['max_W']))
-        max_value = np.max(valid)
-        max_weight = m[-1, max_value]
-        return (max_value, max_weight, None)
+                    M[i,j] = min(M[i-1, j], weight[i]+M[i-1, j-profit[i]])
 
+        # Get maximum profit & weight
+        valid_pos = (np.argwhere(M[-1, :] <= self.P['max_W']))
+        best_profit = np.max(valid_pos)
+        best_w = M[-1, best_profit]
 
+        # Get the optimal set of objects
+        current_p = best_profit
+        current_w = best_w
+        best_set = []
+        for r in range(self.P['N']+1, -1, -1):
+            if M[r-1, current_p] == current_w:
+                # object-r is not taken
+                continue
+            else:
+                assert(M[r, current_p] == M[r-1, current_p-profit[r]] + weight[r])
+                # object-r is taken
+                best_set.insert(0, r)
+                current_p -= profit[r]
+                current_w -= weight[r]
+        
+        return (best_profit, best_w, best_set)
+
+    def FPTAS(self):
+        eps = 0.1
+        P = np.max(self.data[:,0])
+        K = eps * P / self.P['N']
+
+        # Compute new profits
+        profit = np.floor_divide(self.data[:,0], K).astype(int)
+
+        # Apply dynamic algorithm with new profits
+        _, best_w, best_set = self.Dynamic(profit)
+        # best_profit is not given by dynamic algorithm, since profits where modified
+        best_profit = np.sum(self.data[np.array(best_set)-1, 0])
+        return (best_profit, best_w, best_set)
 
 
 
@@ -107,53 +148,7 @@ if __name__ == "__main__":
 
     my_mochila = Knapsack(N, max_W, Mochila)
     tic = time.time()
-    my_mochila.resolve('dynamic')
+    my_mochila.resolve('fptas') # exhaustive, greedy, dynamic, fptas
     toc = time.time()
-
-    # ########
-    # Mochila = read_file('data/mochila_heavy_10.csv')
-    # N = Mochila[0][0]
-    # max_W = Mochila[0][1]
-    # Mochila = Mochila[1:]
-
-    # my_mochila = Knapsack(N, max_W, Mochila)
-    # tic = time.time()
-    # my_mochila.resolve('exhaustive')
-    # toc = time.time()
-    # print("Elapsed time: %g\n" % (toc-tic))
-    # tic = time.time()
-    # my_mochila.resolve('greedy')
-    # toc = time.time()
-    # print("Elapsed time: %g\n" % (toc-tic))
-
-    # ########
-    # Mochila = read_file('data/mochila_heavy_15.csv')
-    # N = Mochila[0][0]
-    # max_W = Mochila[0][1]
-    # Mochila = Mochila[1:]
-
-    # my_mochila = Knapsack(N, max_W, Mochila)
-    # tic = time.time()
-    # my_mochila.resolve('exhaustive')
-    # toc = time.time()
-    # print("Elapsed time: %g\n" % (toc-tic))
-    # tic = time.time()
-    # my_mochila.resolve('greedy')
-    # toc = time.time()
-    # print("Elapsed time: %g\n" % (toc-tic))
-
-    # ########
-    # Mochila = read_file('data/mochila_heavy_20.csv')
-    # N = Mochila[0][0]
-    # max_W = Mochila[0][1]
-    # Mochila = Mochila[1:]
-
-    # my_mochila = Knapsack(N, max_W, Mochila)
-    # tic = time.time()
-    # my_mochila.resolve('exhaustive')
-    # toc = time.time()
-    # print("Elapsed time: %g\n" % (toc-tic))
-    # tic = time.time()
-    # my_mochila.resolve('greedy')
-    # toc = time.time()
-    # print("Elapsed time: %g\n" % (toc-tic))
+    print('Elased time:', toc-tic)
+    

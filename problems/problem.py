@@ -11,6 +11,7 @@ class Problem(ABC):
             'exhaustive': self.ExhaustiveSearch,
             'greedy': self.GreedyAlg,
             'dynamic': self.Dynamic,
+            'fptas': self.FPTAS,
         }
         self.P = {} # instance of the problem
         self.data = None
@@ -29,5 +30,9 @@ class Problem(ABC):
 
 
     def Dynamic(self):
+        raise Exception('This method is not defined')
+
+
+    def FPTAS(self):
         raise Exception('This method is not defined')
 
