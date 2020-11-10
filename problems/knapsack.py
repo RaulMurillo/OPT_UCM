@@ -18,18 +18,12 @@ class Knapsack(Problem):
         print()
 
     def resolve(self, method):
-        print("Solving Knapsack Problem using " + method + " algorithm")
+        print("Solving Knapsack Problem using " + method + " algorithm ...")
         (best_profit, best_w, best_set) = super().resolve(method)
         print("Best solution, with weight %d and profit %d, takes elements:" %
               (best_w, best_profit))
         print(best_set)
-        print(len(best_set))
-        # if not best is None:
-        #     print(np.arange(self.P["N"])[np.array(best)])
-        #     print(len(best))
-        # else:
-        #     print(best)
-        print()
+        print("%d elements in total\n" %(len(best_set)))
 
     def ExhaustiveSearch(self):
         best_profit = 0
@@ -105,8 +99,8 @@ class Knapsack(Problem):
                 continue
             else:
                 assert(M[r, current_p] == M[r-1, current_p-profit[r]] + weight[r])
-                # object-r is taken
-                best_set.insert(0, r)
+                # object r-1 is taken, but it is in position r
+                best_set.insert(0, r-1)
                 current_p -= profit[r]
                 current_w -= weight[r]
         
@@ -123,7 +117,7 @@ class Knapsack(Problem):
         # Apply dynamic algorithm with new profits
         _, best_w, best_set = self.Dynamic(profit)
         # best_profit is not given by dynamic algorithm, since profits where modified
-        best_profit = np.sum(self.data[np.array(best_set)-1, 0])
+        best_profit = np.sum(self.data[best_set, 0])
         return (best_profit, best_w, best_set)
 
 
@@ -148,7 +142,7 @@ if __name__ == "__main__":
 
     my_mochila = Knapsack(N, max_W, Mochila)
     tic = time.time()
-    my_mochila.resolve('fptas') # exhaustive, greedy, dynamic, fptas
+    my_mochila.resolve('fptas') # Choose between exhaustive, greedy, dynamic, fptas
     toc = time.time()
-    print('Elased time:', toc-tic)
+    print('Elapsed time:', toc-tic)
     
