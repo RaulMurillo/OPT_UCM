@@ -1,6 +1,7 @@
 from problem import Problem
 import numpy as np
 import itertools
+import csv
 
 
 class Knapsack(Problem):
@@ -130,8 +131,7 @@ def read_file(fname):
 
 
 if __name__ == "__main__":
-    import csv
-    import numpy as np
+    # import numpy as np
     import time
 
 

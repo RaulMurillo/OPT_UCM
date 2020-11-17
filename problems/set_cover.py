@@ -22,60 +22,56 @@ class Set_Covering(Problem):
     def resolve(self, method):
         print("Solving Set cover Problem using " + method + " algorithm")
         (best_price, best_sets) = super().resolve(method)
-        print("Best solution, with price %d takes sets:" %
-              (best_price))
-        print(best_sets)
+        if len(best_sets):
+            print("Best solution, with price %d takes sets:" %
+                (best_price))
+            best_sets.sort()
+            print(best_sets)
+        else:
+            print('<< ERROR: This instance of set cover has no solution! >>')
         print()
 
     def GreedyAlg(self):
+
         best_price = 0
         best_sets = []
 
-        # U = np.arange(self.P['N_elems']) # Universe of elements
-        # C = np.empty() # Covered elements
-        U = set(range(1, self.P['N_elems']+1))
-        C = set()
+        U = set(range(1, self.P['N_elems']+1)) # Universe of elements
+        C = set() # Covered elements
+
+        elements = set(e for s in self.data for e in s[1:])
+        # Check the subsets cover the universe
+        if elements != U:
+            return (best_price, best_sets)
+
 
         price = np.empty(self.P['N_sets'], dtype=float)
 
-        k = 0
         # while not all(elem in covered for elem in universe):
         while C != U:
-            print('sets are:', C, U)
             # Find the set whose cost-effectiveness is smallest
             for i, S_set in enumerate(self.data):
-                # print(i)
                 S_cost = int(S_set[0])
                 S = set(S_set[1:])
                 diff = len(S.difference(C))
-                print(S)
-                print(diff)
+                # print(S)
+                # print(diff)
                 if diff:
                     price[i] = S_cost / diff
                 else: # avoid 0 division error
                     price[i] = np.inf
-                    # TODO: Remove set from list
-                print(price[i])
-            S_ind = np.argmin(price)#, kind='quicksort')
+                    # TODO: Remove set from list might speed-up the algorithm
+                # print(price[i])
+            S_ind = np.argmin(price)
 
             # Pick such set
             best_price += int(self.data[S_ind][0])
             S = self.data[S_ind][1:]
             best_sets.append(S_ind)
-
-            #########
-            print('Choosing set',S_ind, 'with elems', S)
+            # print('Choosing set',S_ind, 'with elems', S)
 
             # C <- C Union S
             C = C.union(S)
-            print(C)
-
-            print('+'*15)
-            
-            #########
-            k+=1
-            if k > 3:
-                exit(1)
 
         return (best_price, best_sets)
 
@@ -95,15 +91,14 @@ if __name__ == "__main__":
     import time
 
 
-    my_Set = read_file('data/set_cover.csv')
+    my_Set = read_file('data/set_cover_5.txt')
     N_sets = int(my_Set[0][0])
     N_elems = int(my_Set[0][1])
     data = my_Set[1:]
 
 
     my_SetCover = Set_Covering(N_sets, N_elems, data)
-    # print(my_Set)
-    # exit(0)
+    
     tic = time.time()
     my_SetCover.resolve('greedy') # Choose between exhaustive, greedy, dynamic, fptas
     toc = time.time()

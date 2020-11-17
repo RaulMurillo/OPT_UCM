@@ -2,6 +2,8 @@
 # coding: utf-8
 import numpy as np
 import csv
+from pathlib import Path
+Path("data").mkdir(parents=True, exist_ok=True)
 
 def gen_tuples(n, c, obj_w=30, obj_v=30, sep=' ', filename='tuple_'):
     """Function that generates a file of tuples for using as input for 
