@@ -59,11 +59,11 @@ def gen_sets(N_sets, N_elems, max_cost=10, sep=' ', filename='set_cover'):
         avail_elems.clear()
         data = [[N_sets, N_elems]]
 
-    with open('data2/'+filename+'_'+str(N_sets)+'.txt', 'w', newline='') as csv_file:
+    with open('data/'+filename+'_'+str(N_sets)+'.txt', 'w', newline='') as csv_file:
         wr = csv.writer(csv_file, delimiter=sep)
         wr.writerows(data)
 
 
 if __name__ == "__main__":
 
-    gen_sets(5, 10)
+    gen_sets(15, 1000, max_cost=100)

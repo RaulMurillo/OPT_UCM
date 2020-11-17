@@ -8,7 +8,7 @@ Optimization course from Master in Computer Science at Complutense University of
   - [x] [Dynamic programming](https://en.wikipedia.org/wiki/Dynamic_programming)
   - [x] [FPTAS](https://en.wikipedia.org/wiki/Polynomial-time_approximation_scheme#Deterministic)
 - [Set cover problem](https://en.wikipedia.org/wiki/Set_cover_problem)
-  - [ ] [Exhaustive search](https://en.wikipedia.org/wiki/Brute-force_search)
+  - [x] [Exhaustive search](https://en.wikipedia.org/wiki/Brute-force_search)
   - [x] [Greedy algorithm](https://en.wikipedia.org/wiki/Greedy_algorithm)
 
 

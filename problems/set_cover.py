@@ -2,6 +2,7 @@ from problem import Problem
 import numpy as np
 import itertools
 import csv
+import sys
 
 
 class Set_Covering(Problem):
@@ -15,7 +16,7 @@ class Set_Covering(Problem):
         print("="*10+" The Set Covering Problem "+"="*10)
         print("* Number of sets:", N_sets)
         print("* Number of elements:", N_elems)
-        print("* DATA:", self.data)
+        # print("* DATA:", self.data) # Caution when using large data
         print('-'*42)
         print()
     
@@ -30,6 +31,35 @@ class Set_Covering(Problem):
         else:
             print('<< ERROR: This instance of set cover has no solution! >>')
         print()
+
+    def ExhaustiveSearch(self):
+        best_price = sys.maxsize
+        best_sets = []
+        m = None
+
+        U = set(range(1, self.P['N_elems']+1)) # Universe of elements
+
+        elements = set(e for s in self.data for e in s[1:])
+        # Check the subsets cover the universe
+        if elements != U:
+            return (best_price, best_sets)
+
+        for mask in itertools.product([True, False], repeat=self.P['N_sets']):
+            picked_sets = list(itertools.compress(self.data, mask))
+            cost = sum(e for s in picked_sets for e in s[:1])
+            covered = set(e for s in picked_sets for e in s[1:]) # Covered elements
+
+            if covered == U:
+                # print('covered!  cost:', cost, best_price)
+                if cost < best_price:
+                    best_price = cost
+                    best_sets = mask
+
+        best_sets = list(itertools.compress(range(self.P['N_sets']), best_sets))
+        return (best_price, best_sets)
+
+
+
 
     def GreedyAlg(self):
 
@@ -91,7 +121,7 @@ if __name__ == "__main__":
     import time
 
 
-    my_Set = read_file('data/set_cover_5.txt')
+    my_Set = read_file('data/set_cover_15.txt')
     N_sets = int(my_Set[0][0])
     N_elems = int(my_Set[0][1])
     data = my_Set[1:]
@@ -103,3 +133,10 @@ if __name__ == "__main__":
     my_SetCover.resolve('greedy') # Choose between exhaustive, greedy, dynamic, fptas
     toc = time.time()
     print('Elapsed time:', toc-tic)
+    print('-'*42 + '\n')
+    
+    tic = time.time()
+    my_SetCover.resolve('exhaustive') # Choose between exhaustive, greedy, dynamic, fptas
+    toc = time.time()
+    print('Elapsed time:', toc-tic)
+    print('-'*42 + '\n')
