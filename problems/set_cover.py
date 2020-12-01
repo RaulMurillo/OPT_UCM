@@ -59,8 +59,6 @@ class Set_Covering(Problem):
         return (best_price, best_sets)
 
 
-
-
     def GreedyAlg(self):
 
         best_price = 0
@@ -121,7 +119,7 @@ if __name__ == "__main__":
     import time
 
 
-    my_Set = read_file('data/set_cover_15.txt')
+    my_Set = read_file('data/set_cover_20.txt')
     N_sets = int(my_Set[0][0])
     N_elems = int(my_Set[0][1])
     data = my_Set[1:]

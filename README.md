@@ -10,8 +10,10 @@ Optimization course from Master in Computer Science at Complutense University of
 - [Set cover problem](https://en.wikipedia.org/wiki/Set_cover_problem)
   - [x] [Exhaustive search](https://en.wikipedia.org/wiki/Brute-force_search)
   - [x] [Greedy algorithm](https://en.wikipedia.org/wiki/Greedy_algorithm)
+- [Vertex Cover](https://mathworld.wolfram.com/VertexCover.html)
+  - [x] [Greedy algorithm](https://en.wikipedia.org/wiki/Vertex_cover#Approximate_evaluation)
 
-
+  
 <!---- [Minimum Vertex Cover](https://mathworld.wolfram.com/MinimumVertexCover.html) --->
 
 ### References
