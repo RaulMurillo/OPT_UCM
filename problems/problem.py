@@ -12,6 +12,7 @@ class Problem(ABC):
             'greedy': self.GreedyAlg,
             'dynamic': self.Dynamic,
             'fptas': self.FPTAS,
+            'genetic': self.Genetic,
         }
         self.P = {} # instance of the problem
         self.data = None
@@ -35,4 +36,9 @@ class Problem(ABC):
 
     def FPTAS(self):
         raise Exception('This method is not defined')
+
+
+    def Genetic(self):
+        raise Exception('This method is not defined')
+    
 

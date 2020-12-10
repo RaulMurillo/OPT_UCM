@@ -11,6 +11,7 @@ class Set_Covering(Problem):
         # self.solver = solvers_dict[solver.lower()]()
         self.P = {"N_sets": N_sets, 'N_elems': N_elems}
         self.data = data
+        self.costs = np.array([i[0] for i in self.data])
         # data[:,0] is number of elements in set
         print()
         print("="*10+" The Set Covering Problem "+"="*10)
@@ -19,6 +20,10 @@ class Set_Covering(Problem):
         # print("* DATA:", self.data) # Caution when using large data
         print('-'*42)
         print()
+
+    def get_cost(self, subset):
+        return sum(e for s in subset for e in s[:1])
+
     
     def resolve(self, method):
         print("Solving Set cover Problem using " + method + " algorithm")
@@ -26,7 +31,7 @@ class Set_Covering(Problem):
         if len(best_sets):
             print("Best solution, with price %d takes sets:" %
                 (best_price))
-            best_sets.sort()
+            # best_sets.sort()
             print(best_sets)
         else:
             print('<< ERROR: This instance of set cover has no solution! >>')
@@ -46,11 +51,11 @@ class Set_Covering(Problem):
 
         for mask in itertools.product([True, False], repeat=self.P['N_sets']):
             picked_sets = list(itertools.compress(self.data, mask))
-            cost = sum(e for s in picked_sets for e in s[:1])
-            covered = set(e for s in picked_sets for e in s[1:]) # Covered elements
+            cost = self.get_cost(picked_sets)
+            covered_elems = set(e for s in picked_sets for e in s[1:]) # Covered elements[1:]
 
-            if covered == U:
-                # print('covered!  cost:', cost, best_price)
+            if covered_elems == U:
+                # print('covered_elems!  cost:', cost, best_price)
                 if cost < best_price:
                     best_price = cost
                     best_sets = mask
@@ -104,6 +109,70 @@ class Set_Covering(Problem):
         return (best_price, best_sets)
 
 
+    def Genetic(self):
+        N_individuals = 20
+        N_iters = 15
+        U = set(range(1, self.P['N_elems']+1)) # Universe of elements
+
+        best_price = -1
+        best_sets = []
+
+        def fitness(indiv, U):
+            covered_elems = get_elems(indiv)
+            fit = int(covered_elems == U)
+            # picked_sets = list(itertools.compress(self.data, indiv))
+            # print("picked_sets:",picked_sets)
+            cost = sum(self.costs[indiv])
+            # cost = self.get_cost(picked_sets)
+            return fit/cost
+
+        def get_elems(indiv):
+            picked_sets = list(itertools.compress(self.data, indiv))
+            return set(e for s in picked_sets for e in s[1:]) # Covered elements
+
+        # Create initial random population
+        population = (np.random.rand(N_individuals, self.P['N_sets']) > 0.5)
+        pop_fitness = np.empty(2*N_individuals)
+
+        for _ in range(N_iters):
+            print('population:', population)
+            # Alteration
+            np.random.shuffle(population)
+            new_population = (np.empty_like(population)).tolist()
+
+            # Cross population by (random) pairs
+            for k in range(len(population)//2):
+                cut = np.random.randint(0, self.P['N_sets']+1)
+                print(k, cut)
+                new_population[2*k] = np.concatenate([population[2*k][:cut], population[2*k + 1][cut:]])
+                new_population[2*k + 1] = np.concatenate([population[2*k][cut:], population[2*k + 1][:cut]])
+            print('new_population:', new_population)
+            
+            tmp_pop = np.concatenate([population, new_population])
+            print('tmp_pop:\n', tmp_pop)
+            # Compute fitness
+            for j, indiv in enumerate(tmp_pop):
+                covered_elems = get_elems(indiv)
+                f = fitness(indiv, U)
+                pop_fitness[j] = f
+
+            # Sort by fitness
+            indices = np.argsort(pop_fitness)
+            print('pop_fitness:', pop_fitness)
+            print('indices:', indices)
+            
+
+            # Selection
+            population = tmp_pop[indices[N_individuals:]]
+            best_sets = tmp_pop[indices[-1]]
+
+        # best_picked_sets = list(itertools.compress(self.data, best_sets))
+        best_price = sum(self.costs[best_sets]) # self.get_cost(best_picked_sets)
+        return (best_price, best_sets)
+
+
+
+
 
 def read_file(fname):
     with open(fname, 'r', newline='') as csv_file:
@@ -119,7 +188,7 @@ if __name__ == "__main__":
     import time
 
 
-    my_Set = read_file('data/set_cover_20.txt')
+    my_Set = read_file('data/set_cover_10.txt')
     N_sets = int(my_Set[0][0])
     N_elems = int(my_Set[0][1])
     data = my_Set[1:]
@@ -134,7 +203,7 @@ if __name__ == "__main__":
     print('-'*42 + '\n')
     
     tic = time.time()
-    my_SetCover.resolve('exhaustive') # Choose between exhaustive, greedy, dynamic, fptas
+    my_SetCover.resolve('genetic') # Choose between exhaustive, greedy, dynamic, fptas
     toc = time.time()
     print('Elapsed time:', toc-tic)
     print('-'*42 + '\n')

@@ -32,8 +32,8 @@ class Vertex_Cover(Problem):
         graph = self.data.copy()
         vertices = []
         while(graph): # while uncovered graph is not empty
-            print('*'*10)
-            print(graph)
+            # print('*'*10)
+            # print(graph)
             # pick/remove any node in graph (last one)
             v1, edges = graph.popitem()
             if(edges): # node v1 is not isolated
