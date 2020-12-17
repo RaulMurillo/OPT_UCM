@@ -18,8 +18,8 @@ class Problem(ABC):
         self.data = None
 
 
-    def resolve(self, method):
-        return self.solvers_dict[method.lower()]()
+    def resolve(self, method, **kwargs):
+        return self.solvers_dict[method.lower()](**kwargs)
 
 
     def ExhaustiveSearch(self):
@@ -38,7 +38,7 @@ class Problem(ABC):
         raise Exception('This method is not defined')
 
 
-    def Genetic(self):
+    def Genetic(self, **kwargs):
         raise Exception('This method is not defined')
     
 

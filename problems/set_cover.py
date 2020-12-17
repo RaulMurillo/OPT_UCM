@@ -1,8 +1,10 @@
 from problem import Problem
 import numpy as np
+from random import shuffle
 import itertools
 import csv
 import sys
+import logging
 
 
 class Set_Covering(Problem):
@@ -25,14 +27,19 @@ class Set_Covering(Problem):
         return sum(e for s in subset for e in s[:1])
 
     
-    def resolve(self, method):
+    def resolve(self, method, **kwargs):
         print("Solving Set cover Problem using " + method + " algorithm")
-        (best_price, best_sets) = super().resolve(method)
+        (best_price, best_sets) = super().resolve(method, **kwargs)
         if len(best_sets):
             print("Best solution, with price %d takes sets:" %
                 (best_price))
             # best_sets.sort()
-            print(best_sets)
+            if isinstance(best_sets[0], bool):
+                print(list(itertools.compress(range(self.P['N_sets']), best_sets)))
+                print(sum(best_sets))
+            else:
+                print(best_sets)
+                print(len(best_sets))
         else:
             print('<< ERROR: This instance of set cover has no solution! >>')
         print()
@@ -60,7 +67,7 @@ class Set_Covering(Problem):
                     best_price = cost
                     best_sets = mask
 
-        best_sets = list(itertools.compress(range(self.P['N_sets']), best_sets))
+        # best_sets = list(itertools.compress(range(self.P['N_sets']), best_sets))
         return (best_price, best_sets)
 
 
@@ -109,68 +116,88 @@ class Set_Covering(Problem):
         return (best_price, best_sets)
 
 
-    def Genetic(self):
-        N_individuals = 20
-        N_iters = 15
+    def Genetic(self, **kwargs):
+        N_individuals = kwargs.get('N_individuals') # 10
+        N_iters       = kwargs.get('N_iters') # 100
+        mutation_prob = kwargs.get('mutation_prob') # 0.01
+        # assert isinstance(N_individuals, int)
+        # assert isinstance(N_iters, int)
+        # assert isinstance(mutation_prob, float)
+
         U = set(range(1, self.P['N_elems']+1)) # Universe of elements
 
         best_price = -1
         best_sets = []
 
-        def fitness(indiv, U):
-            covered_elems = get_elems(indiv)
-            fit = int(covered_elems == U)
-            # picked_sets = list(itertools.compress(self.data, indiv))
-            # print("picked_sets:",picked_sets)
-            cost = sum(self.costs[indiv])
-            # cost = self.get_cost(picked_sets)
-            return fit/cost
-
         def get_elems(indiv):
             picked_sets = list(itertools.compress(self.data, indiv))
             return set(e for s in picked_sets for e in s[1:]) # Covered elements
 
+        def fitness(indiv, U):
+            covered_elems = get_elems(indiv)
+            fit = (covered_elems == U)
+            # picked_sets = list(itertools.compress(self.data, indiv))
+            # print("picked_sets:",picked_sets)
+            cost = sum(self.costs[indiv])
+            # cost = self.get_cost(picked_sets)
+            if fit:
+                return 1/cost
+            else:
+                if cost > 0:
+                    return len(U - covered_elems)*(-1) + 1/cost
+                else:
+                    return len(U - covered_elems)*(-1)
+            # return fit/cost
+
+        class Individual:
+            self.set_list = [False] * self.P['N_sets']
+            self.fitness = 0.0
+
+            def __init__(self, set_list):
+                self.set_list = set_list
+                self.fitness = fitness(set_list, U)
+
         # Create initial random population
-        population = (np.random.rand(N_individuals, self.P['N_sets']) > 0.5)
-        pop_fitness = np.empty(2*N_individuals)
+        population = [None] * N_individuals
+        children   = [None] * N_individuals
 
-        for _ in range(N_iters):
-            print('population:', population)
-            # Alteration
-            np.random.shuffle(population)
-            new_population = (np.empty_like(population)).tolist()
+        for i in range(N_individuals):
+            population[i] = Individual((np.random.rand(self.P['N_sets']) > 0.5).tolist())
 
+        # Apply N iterations on population
+        for n in range(N_iters):
             # Cross population by (random) pairs
+            shuffle(population)
             for k in range(len(population)//2):
-                cut = np.random.randint(0, self.P['N_sets']+1)
-                print(k, cut)
-                new_population[2*k] = np.concatenate([population[2*k][:cut], population[2*k + 1][cut:]])
-                new_population[2*k + 1] = np.concatenate([population[2*k][cut:], population[2*k + 1][:cut]])
-            print('new_population:', new_population)
+                cut = np.random.randint(1, self.P['N_sets'])
+                logging.debug('Merging following 2 individuals by cuting at {}:\n{}\n{}'.format(cut,
+                                            population[2*k].set_list, population[2*k+1].set_list))
+
+                new_1 = population[2*k].set_list[:cut] + population[2*k+1].set_list[cut:]
+                new_2 = population[2*k+1].set_list[:cut] + population[2*k].set_list[cut:]
+                logging.debug('New individuals are::\n{}\n{}'.format(new_1, new_2))
+
+                # Mutation on new individuals
+                for indiv in [new_1, new_2]:
+                    for gen in range(self.P['N_sets']): # == len(indiv)
+                        if mutation_prob > np.random.rand():
+                            indiv[gen] = not(indiv[gen])
+                logging.debug('Mutated-New individuals are::\n{}\n{}'.format(new_1, new_2))
+                
+                children[2*k] = Individual(new_1)
+                children[2*k + 1] = Individual(new_2)
             
-            tmp_pop = np.concatenate([population, new_population])
-            print('tmp_pop:\n', tmp_pop)
-            # Compute fitness
-            for j, indiv in enumerate(tmp_pop):
-                covered_elems = get_elems(indiv)
-                f = fitness(indiv, U)
-                pop_fitness[j] = f
-
-            # Sort by fitness
-            indices = np.argsort(pop_fitness)
-            print('pop_fitness:', pop_fitness)
-            print('indices:', indices)
+            # Sort total population by fitness
+            tmp_pop = population + children
+            tmp_pop.sort(key=lambda x: x.fitness)
             
+            # Selection of next generation - elitism method
+            population = tmp_pop[-N_individuals:]
+            best_sets = tmp_pop[-1].set_list
+            logging.info('Iteration {} - Best fitness value: {}'.format(n+1, tmp_pop[-1].fitness))
 
-            # Selection
-            population = tmp_pop[indices[N_individuals:]]
-            best_sets = tmp_pop[indices[-1]]
-
-        # best_picked_sets = list(itertools.compress(self.data, best_sets))
-        best_price = sum(self.costs[best_sets]) # self.get_cost(best_picked_sets)
+        best_price = sum(self.costs[best_sets])
         return (best_price, best_sets)
-
-
 
 
 
@@ -184,11 +211,10 @@ def read_file(fname):
 
 
 if __name__ == "__main__":
-    # import numpy as np
     import time
+    # logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
 
-
-    my_Set = read_file('data/set_cover_10.txt')
+    my_Set = read_file('data/set_cover_100.txt')
     N_sets = int(my_Set[0][0])
     N_elems = int(my_Set[0][1])
     data = my_Set[1:]
@@ -201,9 +227,12 @@ if __name__ == "__main__":
     toc = time.time()
     print('Elapsed time:', toc-tic)
     print('-'*42 + '\n')
-    
+    #####################
+    N_individuals = 10
+    N_iters = 100
+    mutation_prob = 0.01
     tic = time.time()
-    my_SetCover.resolve('genetic') # Choose between exhaustive, greedy, dynamic, fptas
+    my_SetCover.resolve('genetic', N_individuals=N_individuals, N_iters=N_iters, mutation_prob=mutation_prob) # Choose between exhaustive, greedy, dynamic, fptas
     toc = time.time()
     print('Elapsed time:', toc-tic)
     print('-'*42 + '\n')

@@ -7,7 +7,7 @@ Path("data").mkdir(parents=True, exist_ok=True)
 
 def gen_elems(N_elems):
     # There is no posibility any set contains all elements
-    n = random.randint(1, N_elems-1) # 1 <= n <= N_elems-1  # uniform distribution
+    n = random.randint(1, (N_elems-1)//10) # 1 <= n <= (N_elems-1)/10  # uniform distribution
     randomlist = random.sample(range(1, N_elems+1), n) # Take n random unique elements (without replacement)
     randomlist.sort()
     return randomlist
@@ -66,4 +66,4 @@ def gen_sets(N_sets, N_elems, max_cost=10, sep=' ', filename='set_cover'):
 
 if __name__ == "__main__":
 
-    gen_sets(15, 1000, max_cost=100)
+    gen_sets(200, 1000, max_cost=100)
