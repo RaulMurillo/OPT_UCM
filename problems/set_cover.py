@@ -191,10 +191,19 @@ class Set_Covering(Problem):
             tmp_pop = population + children
             tmp_pop.sort(key=lambda x: x.fitness)
             
-            # Selection of next generation - elitism method
+            # Selection of next generation: elitism method
             population = tmp_pop[-N_individuals:]
             best_sets = tmp_pop[-1].set_list
             logging.info('Iteration {} - Best fitness value: {}'.format(n+1, tmp_pop[-1].fitness))
+            # Other possibility: np.random.choice(vec,size,replace=False, p=P)
+
+
+
+        covered_elems = get_elems(best_sets)
+        if(covered_elems == U):
+            print('Valid solution!')
+        else:
+            print('NOT Valid solution :(')
 
         best_price = sum(self.costs[best_sets])
         return (best_price, best_sets)
@@ -214,7 +223,7 @@ if __name__ == "__main__":
     import time
     # logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
 
-    my_Set = read_file('data/set_cover_100.txt')
+    my_Set = read_file('data/set_cover_200.txt')
     N_sets = int(my_Set[0][0])
     N_elems = int(my_Set[0][1])
     data = my_Set[1:]
