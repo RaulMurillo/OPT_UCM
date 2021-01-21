@@ -1,5 +1,5 @@
 # OPT_UCM
-Optimization course from Master in Computer Science at Complutense University of Madrid (WIP)
+Implementation of NP-hard problems and solvers from Optimization course. Master in Computer Science at Complutense University of Madrid. Course 2020-2021.
 
 ### Problems & Algorithms
 - [Knapsack problem](https://en.wikipedia.org/wiki/Knapsack_problem)
